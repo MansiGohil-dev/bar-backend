@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL  ,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -31,33 +31,66 @@ const productSchema = new mongoose.Schema({
 const Product = mongoose.model('Product', productSchema);
 
 // Generate barcode as PNG data URL with name and number
+// const generateBarcode = (name, barcodeNumber) => {
+//   const canvas = createCanvas(200, 100); // Adjust size as needed
+//   const ctx = canvas.getContext('2d');
+
+//   // Draw the barcode
+//   JsBarcode(canvas, barcodeNumber, {
+//     format: 'CODE128',
+//     displayValue: false, // Hide the default barcode number
+//     width: 2,
+//     height: 60,
+//     margin: 10,
+//   });
+
+//   // Add product name above barcode
+//   ctx.fillStyle = '#000000';
+//   ctx.font = '16px Arial';
+//   ctx.textAlign = 'center';
+//   ctx.fillText(name, canvas.width / 2, 20);
+
+//   // Add barcode number below barcode
+//   ctx.font = '12px Arial';
+//   ctx.fillText(barcodeNumber, canvas.width / 2, 90);
+
+//   // Convert to data URL and return
+//   const dataURL = canvas.toDataURL('image/png');
+//   console.log('Generated barcode dataURL:', dataURL.substring(0, 50) + '...'); // Log to verify content
+//   return dataURL;
+// };
 const generateBarcode = (name, barcodeNumber) => {
-  const canvas = createCanvas(200, 100); // Adjust size as needed
+  const canvasWidth = 300;
+  const canvasHeight = 150;
+  const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext('2d');
 
-  // Draw the barcode
-  JsBarcode(canvas, barcodeNumber, {
+  // Fill background white (optional, improves PNG appearance)
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  // Product Name (Top Centered)
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, canvasWidth / 2, 25);
+
+  // Barcode (Middle)
+  const barcodeCanvas = createCanvas(280, 60);
+  JsBarcode(barcodeCanvas, barcodeNumber, {
     format: 'CODE128',
-    displayValue: false, // Hide the default barcode number
     width: 2,
     height: 60,
-    margin: 10,
+    displayValue: false,
+    margin: 0,
   });
+  ctx.drawImage(barcodeCanvas, (canvasWidth - barcodeCanvas.width) / 2, 40);
 
-  // Add product name above barcode
-  ctx.fillStyle = '#000000';
+  // Barcode Number (Bottom Centered)
   ctx.font = '16px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(name, canvas.width / 2, 20);
+  ctx.fillText(barcodeNumber, canvasWidth / 2, 130);
 
-  // Add barcode number below barcode
-  ctx.font = '12px Arial';
-  ctx.fillText(barcodeNumber, canvas.width / 2, 90);
-
-  // Convert to data URL and return
-  const dataURL = canvas.toDataURL('image/png');
-  console.log('Generated barcode dataURL:', dataURL.substring(0, 50) + '...'); // Log to verify content
-  return dataURL;
+  return canvas.toDataURL('image/png');
 };
 
 // Create a new product
